@@ -10,5 +10,7 @@ Video sorting algorithm based upon motion
 The frame and mask with maximum motion is saves as a PNG and  some details about the video are recorded to CSV file e.g. filename, duration, motion metric max, maximum blob size, time of maximum motion in video
 
 Issues:
-1) The above assumes the largest moving object in the video is of most interest
-2) Needs to employ CUDA
+1) Assumes all videos are 2880x2880 
+2) Assumes the largest moving object in the video is of most interest
+3) Needs to employ CUDA
+4) Crappy approach to file saving
