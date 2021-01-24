@@ -13,7 +13,7 @@ Issues:
 1) Assumes all videos are 2880x2880 
 2) Assumes the largest moving object in the video is of most interest
 3) Needs to employ CUDA
-4) Crappy approach to file saving
+4) Poor coding / approach to file saving
 
 
 ![Screenshot](frame_f802a486-b16c-4756-b224-739d55214e27_28.5711_43.044.png)
