@@ -53,20 +53,19 @@ bool writeCsvFile(filename& fileName, T1 column1, T2 column2, T3 column3, T4 col
 
 
 int main(int argc, char* argv[])
-{
-
-    Ptr<BackgroundSubtractor> pBackSub;
-    TickMeter processingTimer;              
- 
+{           
 	string csvFile = "results.csv";
 
     if (!fileExists(csvFile))
         writeCsvFile(csvFile, "Filename", "Duration", "Metric 1", "Metric 2", "Time of max", "Saved (0 or 1)");
 
+	Ptr<BackgroundSubtractor> pBackSub;
+	TickMeter processingTimer;
+
     // Iterate over video files
     for (const auto& entry : experimental::filesystem::directory_iterator(PATHTOVIDEOS)) 
     {
-        processingTimer.start();
+        processingTimer.start(); // Record processing time
 
         VideoCapture capture(entry.path().string());
         if (!capture.isOpened()) {
@@ -77,6 +76,13 @@ int main(int argc, char* argv[])
 
         double videoDuration = capture.get(CAP_PROP_FRAME_COUNT) / capture.get(CAP_PROP_FPS);
         cout << "Duration (seconds): " << videoDuration << endl;
+
+		double videoWidth = capture.get(CAP_PROP_FRAME_WIDTH);
+		double videoHeight = capture.get(CAP_PROP_FRAME_HEIGHT);
+		double aspectRatio = videoWidth / videoHeight;
+		cout << "Width (px): " << videoWidth << endl;
+		cout << "Height (px): " << videoHeight << endl;
+		cout << "Aspect Ratio: " << aspectRatio << endl;
 
         double sumChannelZero = 0.0;
         double sumDistribution = 0.0;
@@ -89,7 +95,7 @@ int main(int argc, char* argv[])
         int motionFramesCount = 0;
 
         // Region of interest (assumes all videos are 2880x2880)
-        int xo = 200, yo = 200;
+        int xo = 200, yo = 200;  // int xo = 760, yo = 260;
         int width = 2480, height = 2480;
 
         pBackSub = createBackgroundSubtractorMOG2(25, 500, false);
@@ -139,7 +145,7 @@ int main(int argc, char* argv[])
             // Sum foreground mask values
             double t = cv::sum(fgMask)[0];
 
-            // If frame has some movement
+            // If frame has any movement
             if (t > 0)
             {
                 sumChannelZero += t;
