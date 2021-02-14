@@ -32,7 +32,6 @@ int main(int argc, char* argv[])
 	bool _isd_evice_compatible = _deviceInfo.isCompatible();
 	cout << "CUDA Device(s) Compatible: " << _isd_evice_compatible << endl;
 	
-	// GPU Loop
 	TickMeter processingTimer;
 
     for (const auto& entry : experimental::filesystem::directory_iterator(PATHTOVIDEOS)) 
@@ -45,11 +44,10 @@ int main(int argc, char* argv[])
         cout << entry.path() << endl;
 
         double videoDuration = capture.get(CAP_PROP_FRAME_COUNT) / capture.get(CAP_PROP_FPS);
-        cout << "Duration (seconds): " << videoDuration << endl;
-
 		double videoWidth = capture.get(CAP_PROP_FRAME_WIDTH);
 		double videoHeight = capture.get(CAP_PROP_FRAME_HEIGHT);
 		double aspectRatio = videoWidth / videoHeight;
+		cout << "Duration (seconds): " << videoDuration << endl;
 		cout << "Width (px): " << videoWidth << endl;
 		cout << "Height (px): " << videoHeight << endl;
 		cout << "Aspect Ratio: " << aspectRatio << endl << endl;
@@ -65,9 +63,12 @@ int main(int argc, char* argv[])
 		namedWindow("image", WINDOW_NORMAL);
 		namedWindow("foreground mask", WINDOW_NORMAL);
 
+		int frameCount = 0;
+		double frameSum = 0.0;
+
         // Frame loop
 		processingTimer.start();
-		for (;;)
+		while (true)
 		{
 			capture >> frame;
 			if (frame.empty())
@@ -78,7 +79,8 @@ int main(int argc, char* argv[])
 
 			pBackSubGPU->apply(d_frame, d_fgmask);
 
-			double frameSum = cuda::sum(d_fgmask)[0];
+			frameSum += cuda::sum(d_fgmask)[0];
+			frameCount++;
 
 			double fps = cv::getTickFrequency() / (cv::getTickCount() - start);
 			//std::cout << "FPS : " << fps << std::endl;
@@ -96,6 +98,7 @@ int main(int argc, char* argv[])
         capture.release();
         pBackSubGPU.release();
 
+		cout << "Motion: " << frameSum / frameCount << endl;
 		cout << "GPU Total time: " << processingTimer.getTimeSec() << endl << endl;
 	}
 
@@ -118,10 +121,13 @@ int main(int argc, char* argv[])
 
 		pBackSubCPU->apply(frame, fgmask);
 
+		int frameCount = 0;
+		double frameSum = 0.0;
+
 		// Frame loop
 		processingTimer.reset();
 		processingTimer.start();
-		for (;;)
+		while (true)
 		{
 			capture >> frame;
 			if (frame.empty())
@@ -131,7 +137,8 @@ int main(int argc, char* argv[])
 
 			pBackSubCPU->apply(frame, fgmask);
 
-			double frameSum = cv::sum(fgmask)[0];
+			frameSum = cv::sum(fgmask)[0];
+			frameCount++;
 
 			double fps = cv::getTickFrequency() / (cv::getTickCount() - start);
 			//std::cout << "FPS : " << fps << std::endl;
@@ -148,7 +155,8 @@ int main(int argc, char* argv[])
 		capture.release();
 		pBackSubCPU.release();
 
-		cout << "CPU Total time: " << processingTimer.getTimeSec();
+		cout << "Motion: " << frameSum / frameCount << endl;
+		cout << "CPU Total time: " << processingTimer.getTimeSec() << endl;
 	}
 
     return 0;
